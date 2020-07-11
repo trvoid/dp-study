@@ -5,7 +5,8 @@ import pandas as pd
 # Number of all the patients
 N_patient = 5
 
-public_patient_data = np.array([True, False, True, True, True])
+#public_patient_data = np.array([True, False, True, True, True])
+public_patient_data = np.random.rand(N_patient) < 0.9
 public_count_true = np.count_nonzero(public_patient_data == True)
 #df = pd.DataFrame(public_patient_data.reshape(-1,N_patient), columns=['patient-0', 'patient-1', 'patient-2', 'patient-3', 'patient-4'])
 #df['count(True)'] = public_count_true
