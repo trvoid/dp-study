@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지역 차등 정보보호: 임의화 응답 시뮬레이터 (다중 선택)</title>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 20px;
+            background-color: #f9f9f9;
+        }
+        header, section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        h1, h2 {
+            color: #1a73e8;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .survey-options label {
+            display: inline-block;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1558b8;
+        }
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 300px;
+        }
+        #pValueDisplay, #epsilonValueDisplay {
+            font-weight: bold;
+            color: #d93025;
+        }
+        #results {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            background-color: #f1f3f4;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .explanation {
+            background-color: #e8f0fe;
+            border-left: 5px solid #1a73e8;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>지역 차등 정보보호: 임의화 응답 시뮬레이터 (다중 선택) 🎲</h1>
+        <p>임의화 응답은 개인의 민감한 정보에 '노이즈'를 추가하여 프라이버시를 보호하면서도 전체 통계의 유의미성을 확보하는 차등 정보보호 기술입니다. 이 페이지는 다중 선택 응답 환경에서 임의화 응답이 어떻게 동작하는지 시뮬레이션합니다.</p>
+        <div class="explanation">
+            <p><strong>작동 원리 ⚙️:</strong></p>
+            <p>
+                <ol>
+                    <li><b>진실 응답:</b> 사용자는 스피너를 돌리기 전에 질문에 대한 자신의 실제 답변('예' 또는 '아니오')을 마음속으로 정합니다.
+                    <li><b>스피너 돌리기:</b>
+                        <ul>
+                            <li>스피너가 밝은 면(p의 비율)에 멈추면, 사용자는 자신의 실제 답변을 그대로 말합니다.
+                            <li>스피너가 어두운 면(1-p의 비율)에 멈추면, 사용자는 동전을 던지는 것과 같이 50% 확률로 '예', 50% 확률로 '아니오' 중 하나를 무작위로 선택하여 답합니다.
+                        </ul>
+                    </li>
+            </p>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <h2>1. 개인정보 보호 강도 설정</h2>
+            <div class="controls">
+                <div class="control-group>
+                    <label for="pSlider"><b>프라이버시 손실 ($\epsilon$):</b> <span id="epsilonValueDisplay">0.80</span> => <b>진실 응답 확률 (p):</b> <span id="pValueDisplay">0.80</span></label>
+                    <input type="range" id="pSlider" min="0.1" max="5.0" step="0.05" value="2.0">
+                </div>
+            </div>
+            <div class="explanation">
+                <p><strong>확률 `p`란?</strong> 응답자가 자신의 진짜 답변을 제출할 확률입니다.</p>
+                <ul>
+                  <li><b>p가 1에 가까울수록 (보호 강도 낮음):</b> 응답이 정확해져 추정치의 정확도는 올라가지만, 개인의 응답이 노출될 위험은 커집니다.<br>
+                  <li><b>p가 0에 가까울수록 (보호 강도 높음):</b> 응답이 무작위에 가까워져 개인 정보는 강력히 보호되지만, 원본 통계를 추정하기 위해 더 많은 데이터가 필요합니다.
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>2. 설문 응답 시뮬레이션</h2>
+            <p><strong>귀하의 취미를 모두 선택해주세요.</strong> (여러 개 선택 가능)</p>
+            <div id="surveyForm" class="survey-options">
+                </div>
+            <br>
+            <button id="submitBtn">응답 제출 (1명)</button>
+            <button id="submit100Btn">응답 제출 (100명)</button>
+        </section>
+
+        <section>
+            <h2>3. 시뮬레이션 결과 (총 <span id="responseCount">0</span>명 응답)</h2>
+            <canvas id="resultsChart"></canvas>
+            <div class="explanation">
+                <p><strong>추정 공식:</strong></p>
+                <p>수집된 응답으로부터 원본 응답 비율($\lambda_{true}$)을 추정하는 공식은 다음과 같습니다. 여기서 $\lambda_{noisy}$는 노이즈가 포함된 응답에서 '예'라고 답한 비율, `n`은 총 응답자 수, `p`는 진실 응답 확률입니다.</p>
+                $$ \lambda_{true\_estimated} = \frac{\pi_{noisy} - 0.5 \times (1 - p)}{p} $$
+                <p>위 공식으로 추정된 비율에 총 응답자 수 `n`을 곱하면 원본 응답자 수를 추정할 수 있습니다. 응답자 수(`n`)가 적을 때는 추정 오차가 크지만, `n`이 커질수록 <strong>'추정된 실제 값'</strong>이 <strong>'실제 값'</strong>에 근접하는 것을 확인할 수 있습니다.</p>
+            </div>
+            <h3>결과 데이터</h3>
+            <pre id="results"></pre>
+        </section>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- 설정 및 변수 초기화 ---
+    const SURVEY_OPTIONS = ["📚 독서", "💪 헬스", "🎮 게임", "✈️ 여행"];
+    let n = 0; // 총 응답자 수
+    let epsilon = 2.0
+    let expEpsilon = Math.exp(epsilon)
+    let p = (expEpsilon - 1)/(expEpsilon + 1); // 진실 응답 확률
+
+    let trueCounts = Array(SURVEY_OPTIONS.length).fill(0);
+    let noisyCounts = Array(SURVEY_OPTIONS.length).fill(0);
+    let estimatedCounts = Array(SURVEY_OPTIONS.length).fill(0);
+
+    // --- DOM 요소 가져오기 ---
+    const surveyForm = document.getElementById('surveyForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submit100Btn = document.getElementById('submit100Btn');
+    const pSlider = document.getElementById('pSlider');
+    const pValueDisplay = document.getElementById('pValueDisplay');
+    const epsilonValueDisplay = document.getElementById('epsilonValueDisplay');
+    const responseCountSpan = document.getElementById('responseCount');
+    const resultsPre = document.getElementById('results');
+    const ctx = document.getElementById('resultsChart').getContext('2d');
+
+    // --- 설문 옵션 동적 생성 ---
+    SURVEY_OPTIONS.forEach((option, index) => {
+        const div = document.createElement('div');
+        div.style.display = 'inline-block';
+        div.style.margin = '5px';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `option${index}`;
+        checkbox.value = option;
+        const label = document.createElement('label');
+        label.htmlFor = `option${index}`;
+        label.textContent = option;
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        surveyForm.appendChild(div);
+    });
+
+    // --- Chart.js 차트 초기화 ---
+    const resultsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: SURVEY_OPTIONS,
+            datasets: [
+                {
+                    label: '실제 값 (True)',
+                    data: trueCounts,
+                    backgroundColor: 'rgba(26, 115, 232, 0.7)', // 파랑
+                    borderColor: 'rgba(26, 115, 232, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: '추정된 실제 값 (Estimated)',
+                    data: estimatedCounts,
+                    backgroundColor: 'rgba(217, 48, 37, 0.7)', // 빨강
+                    borderColor: 'rgba(217, 48, 37, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: '수집된 값 (Noisy)',
+                    data: noisyCounts,
+                    backgroundColor: 'rgba(251, 188, 5, 0.6)', // 노랑
+                    borderColor: 'rgba(251, 188, 5, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '응답자 수'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toFixed(1);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // --- 핵심 로직 함수 ---
+
+    /** 한 명의 응답을 시뮬레이션하고 상태를 업데이트합니다. */
+    const simulateSingleResponse = (isAuto = false) => {
+        n++;
+
+        // isAuto가 true일 경우(100명 제출) 임의의 응답을 생성, 아니면 체크박스 값 사용
+        const userResponses = isAuto
+            ? SURVEY_OPTIONS.map(() => Math.random() < 0.35) // 약 35% 확률로 취미 선택
+            : SURVEY_OPTIONS.map((_, i) => document.getElementById(`option${i}`).checked);
+
+        // 실제 값 및 임의화 응답 값 업데이트
+        userResponses.forEach((response, i) => {
+            if (response) {
+                trueCounts[i]++;
+            }
+
+            // 임의화 응답 (Randomized Response) 적용
+            let noisyResponse;
+            if (Math.random() < p) {
+                // p의 확률로 진실 응답
+                noisyResponse = response;
+            } else {
+                // 1-p의 확률로 무작위 응답 (동전 던지기)
+                noisyResponse = Math.random() < 0.5;
+            }
+
+            if (noisyResponse) {
+                noisyCounts[i]++;
+            }
+        });
+
+        updateEstimates();
+        updateDisplay();
+    };
+
+    /** 수집된 noisyCounts를 기반으로 estimatedCounts를 다시 계산합니다. */
+    const updateEstimates = () => {
+        if (n === 0) return;
+
+        for (let i = 0; i < SURVEY_OPTIONS.length; i++) {
+            const noisyPi = noisyCounts[i] / n;
+            // 추정 공식 적용
+            const estimatedPi = (noisyPi - 0.5 * (1 - p)) / p;
+            // 추정된 수는 0과 n 사이의 값으로 보정 (통계적 노이즈로 인한 이탈 방지)
+            const estimatedCount = Math.max(0, Math.min(n, estimatedPi * n));
+            estimatedCounts[i] = estimatedCount;
+        }
+    };
+    
+    /** 화면의 모든 표시 내용을 업데이트합니다. */
+    const updateDisplay = () => {
+        // 차트 데이터 업데이트
+        resultsChart.data.datasets[0].data = trueCounts;
+        resultsChart.data.datasets[1].data = estimatedCounts;
+        resultsChart.data.datasets[2].data = noisyCounts;
+        resultsChart.options.scales.y.max = n > 0 ? n : 1;
+        resultsChart.update();
+
+        // 텍스트 정보 업데이트
+        responseCountSpan.textContent = n;
+        resultsPre.textContent =
+`           | ${SURVEY_OPTIONS.map(opt => opt.padEnd(10)).join(' | ')}
+--------------------------------------------------------------------------------------------------
+실제 값    | ${trueCounts.map(c => c.toString().padStart(10)).join(' | ')}
+수집된 값  | ${noisyCounts.map(c => c.toString().padStart(10)).join(' | ')}
+추정된 값  | ${estimatedCounts.map(c => c.toFixed(1).padStart(10)).join(' | ')}`;
+    };
+
+    // --- 이벤트 리스너 ---
+    submitBtn.addEventListener('click', () => simulateSingleResponse(false));
+    
+    submit100Btn.addEventListener('click', () => {
+        for (let i = 0; i < 100; i++) {
+            simulateSingleResponse(true);
+        }
+    });
+
+    pSlider.addEventListener('input', (e) => {
+        epsilon = parseFloat(e.target.value);
+        expEpsilon = Math.exp(epsilon)
+        p = (expEpsilon - 1)/(expEpsilon + 1)
+        epsilonValueDisplay.textContent = epsilon.toFixed(2);
+        pValueDisplay.textContent = p.toFixed(2);
+        // p값이 바뀌면 추정치를 다시 계산하고 화면을 업데이트
+        updateEstimates();
+        updateDisplay();
+    });
+
+    // --- 초기 화면 렌더링 ---
+    epsilon = parseFloat(pSlider.value);
+    expEpsilon = Math.exp(epsilon)
+    p = (expEpsilon - 1)/(expEpsilon + 1)
+    epsilonValueDisplay.textContent = epsilon.toFixed(2);
+    pValueDisplay.textContent = p.toFixed(2);
+
+    updateDisplay();
+});
+</script>
+
+</body>
+</html>
