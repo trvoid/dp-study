@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>지역 차등 정보보호: 임의화 응답 시뮬레이터 (다중 선택)</title>
+    <title>지역 차등 정보보호: 임의화 응답 시뮬레이터 (스피너+동전 사용)</title>
     <script>
         MathJax = {
             tex: {
@@ -31,7 +31,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         h1, h2 {
-            color: #1a73e8;
+            color: coral;
             border-bottom: 2px solid #e0e0e0;
             padding-bottom: 10px;
         }
@@ -79,28 +79,47 @@
         }
         .explanation {
             background-color: #e8f0fe;
-            border-left: 5px solid #1a73e8;
+            border-left: 5px solid coral;
             padding: 15px;
             margin: 20px 0;
+        }
+        .explanation ul {
+            padding-left: 20px;
+        }
+        .explanation li {
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>지역 차등 정보보호: 임의화 응답 시뮬레이터 (다중 선택) 🎲</h1>
-        <p>임의화 응답은 개인의 민감한 정보에 '노이즈'를 추가하여 프라이버시를 보호하면서도 전체 통계의 유의미성을 확보하는 차등 정보보호 기술입니다. 이 페이지는 다중 선택 응답 환경에서 임의화 응답이 어떻게 동작하는지 시뮬레이션합니다.</p>
+        <h1>지역 차등 정보보호: 임의화 응답 시뮬레이터 🎲<br>(스피너+동전 사용)</h1>
+        <p>
+            임의화 응답은 개인의 민감한 정보에 '노이즈'를 추가하여 프라이버시를 보호하면서도 전체 통계의 유의미성을 확보하는 차등 정보보호 기술입니다. 이 페이지는 다중 선택 응답 환경에서 임의화 응답이 어떻게 동작하는지 시뮬레이션합니다. 각각의 선택 항목에 대하여 독립적으로 임의화 응답을 적용하는 것이므로 단일 선택 문제와 같은 기술을 사용한다고 보시면 됩니다.
+        </p>
         <div class="explanation">
             <p><strong>작동 원리 ⚙️:</strong></p>
+            <p>정해진 프라이버시 손실($\epsilon$)에 따라 스피너의 밝은 면의 비율($p$)을 아래와 같이 정합니다.</p>
+            <p>$$ p = \frac{e^\epsilon - 1}{e^\epsilon + 1} $$</p>
             <p>
-                <ol>
-                    <li><b>진실 응답:</b> 사용자는 스피너를 돌리기 전에 질문에 대한 자신의 실제 답변('예' 또는 '아니오')을 마음속으로 정합니다.
-                    <li><b>스피너 돌리기:</b>
+                <ul>
+                    <li>
+                        <strong>1단계 (응답자):</strong> 각 응답자는 스피너를 돌리기 전에 질문에 대한 자신의 실제 답변('예' 또는 '아니오')을 마음속으로 정합니다. 그리고 스피너를 돌립니다.
                         <ul>
-                            <li>스피너가 밝은 면(p의 비율)에 멈추면, 사용자는 자신의 실제 답변을 그대로 말합니다.
-                            <li>스피너가 어두운 면(1-p의 비율)에 멈추면, 사용자는 동전을 던지는 것과 같이 50% 확률로 '예', 50% 확률로 '아니오' 중 하나를 무작위로 선택하여 답합니다.
+                            <li>스피너가 밝은 면에 멈추면, 응답자는 자신의 실제 답변을 그대로 말합니다.
+                            <li>스피너가 어두운 면에 멈추면, 응답자는 동전을 던지는 것과 같이 50% 확률로 '예', 50% 확률로 '아니오' 중 하나를 무작위로 선택하여 답합니다.
                         </ul>
                     </li>
+                    <li>
+                        <strong>2단계 (분석가):</strong> 분석가는 보고된 응답들을 수집합니다. 개별 응답은 진실인지 거짓인지 알 수 없지만, 전체 응답으로부터 원본 통계치를 추정할 수 있습니다.
+                    </li>
+                    <li>
+                        <strong>3단계 (추정):</strong> 수집된 응답으로부터 원본 응답 비율($\pi_{true}$)을 추정하는 공식은 다음과 같습니다. 여기서 $\pi_{noisy}$는 노이즈가 포함된 응답에서 '예'라고 답한 비율, n은 총 응답자 수, p는 진실 응답 확률입니다.
+                        $$ \pi_{true\_estimated} = \frac{\pi_{noisy} - 0.5 \times (1 - p)}{p} $$
+                        <p>위 공식으로 추정된 비율에 총 응답자 수 n을 곱하면 원본 응답자 수를 추정할 수 있습니다. 응답자 수(n)가 적을 때는 추정 오차가 크지만, n이 커질수록 <strong>'추정된 실제 값'</strong>이 <strong>'실제 값'</strong>에 근접하는 것을 확인할 수 있습니다.</p>
+                    </li>
+                </ul>
             </p>
         </div>
     </header>
@@ -136,12 +155,6 @@
         <section>
             <h2>3. 시뮬레이션 결과 (총 <span id="responseCount">0</span>명 응답)</h2>
             <canvas id="resultsChart"></canvas>
-            <div class="explanation">
-                <p><strong>추정 공식:</strong></p>
-                <p>수집된 응답으로부터 원본 응답 비율($\lambda_{true}$)을 추정하는 공식은 다음과 같습니다. 여기서 $\lambda_{noisy}$는 노이즈가 포함된 응답에서 '예'라고 답한 비율, `n`은 총 응답자 수, `p`는 진실 응답 확률입니다.</p>
-                $$ \lambda_{true\_estimated} = \frac{\pi_{noisy} - 0.5 \times (1 - p)}{p} $$
-                <p>위 공식으로 추정된 비율에 총 응답자 수 `n`을 곱하면 원본 응답자 수를 추정할 수 있습니다. 응답자 수(`n`)가 적을 때는 추정 오차가 크지만, `n`이 커질수록 <strong>'추정된 실제 값'</strong>이 <strong>'실제 값'</strong>에 근접하는 것을 확인할 수 있습니다.</p>
-            </div>
             <h3>결과 데이터</h3>
             <pre id="results"></pre>
         </section>
